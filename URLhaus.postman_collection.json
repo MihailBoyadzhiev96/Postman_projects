@@ -1,0 +1,105 @@
+{
+	"info": {
+		"_postman_id": "c89a5722-59d7-4d69-aa40-fc7dcca23053",
+		"name": "URLhaus",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "37066892"
+	},
+	"item": [
+		{
+			"name": "Receive and submit malware URLs Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Parse the response body as JSON\r",
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"// Verify that query_status is \"ok\"\r",
+							"pm.test(\"Verify query_status is 'ok'\", function () {\r",
+							"    pm.expect(responseData.query_status).to.equal('ok');\r",
+							"});\r",
+							"\r",
+							"// Loop through each URL in the urls array\r",
+							"responseData.urls.forEach(function(url, index) {\r",
+							"    // Block 1: Verify common properties for each URL object\r",
+							"    pm.test(\"URL \" + (index + 1) + \" has required properties\", function () {\r",
+							"        pm.expect(url).to.have.property('id');\r",
+							"        pm.expect(url).to.have.property('url');\r",
+							"        pm.expect(url).to.have.property('url_status');\r",
+							"        pm.expect(url).to.have.property('host');\r",
+							"        pm.expect(url).to.have.property('date_added');\r",
+							"        pm.expect(url).to.have.property('threat');\r",
+							"        pm.expect(url).to.have.property('blacklists');\r",
+							"        pm.expect(url).to.have.property('reporter');\r",
+							"        pm.expect(url).to.have.property('larted');\r",
+							"        pm.expect(url).to.have.property('tags');\r",
+							"    });\r",
+							"\r",
+							"    // If first verification (url_status) is successful, enter the next block\r",
+							"    if (url.url_status === 'online') {\r",
+							"        // Block 2: Verify properties for blacklists object\r",
+							"        pm.test(\"URL \" + (index + 1) + \" blacklists have required properties\", function () {\r",
+							"            pm.expect(url.blacklists).to.have.property('spamhaus_dbl');\r",
+							"            pm.expect(url.blacklists).to.have.property('surbl');\r",
+							"        });\r",
+							"\r",
+							"        // If second verification (spamhaus_dbl) is successful, enter the next block\r",
+							"        if (url.blacklists.spamhaus_dbl === 'not listed') {\r",
+							"            // Block 3: Verify properties for tags array\r",
+							"            pm.test(\"URL \" + (index + 1) + \" has tags array with valid strings\", function () {\r",
+							"                pm.expect(url.tags).to.be.an('array');\r",
+							"                url.tags.forEach(function(tag) {\r",
+							"                    pm.expect(tag).to.be.a('string');\r",
+							"                });\r",
+							"            });\r",
+							"\r",
+							"        } else if (url.blacklists.spamhaus_dbl === 'listed') {\r",
+							"            // Handle case where spamhaus_dbl is listed\r",
+							"            pm.test(\"URL \" + (index + 1) + \" spamhaus_dbl is listed\", function () {\r",
+							"                // Add any specific checks you need for this condition\r",
+							"            });\r",
+							"        } else {\r",
+							"            pm.test(\"URL \" + (index + 1) + \" spamhaus_dbl has unexpected value\", function () {\r",
+							"                pm.expect.fail(\"Unexpected value for spamhaus_dbl: \" + url.blacklists.spamhaus_dbl);\r",
+							"            });\r",
+							"        }\r",
+							"    } else {\r",
+							"        pm.test(\"URL \" + (index + 1) + \" is not online\", function () {\r",
+							"            pm.expect.fail(\"URL is not online: \" + url.url_status);\r",
+							"        });\r",
+							"    }\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://urlhaus-api.abuse.ch/v1/urls/recent/limit/3/",
+					"protocol": "https",
+					"host": [
+						"urlhaus-api",
+						"abuse",
+						"ch"
+					],
+					"path": [
+						"v1",
+						"urls",
+						"recent",
+						"limit",
+						"3",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
